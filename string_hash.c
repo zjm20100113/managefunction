@@ -113,39 +113,9 @@ hash_init(hash_init_t *hinit, hash_key_t *name, int nelts)
 
   bucket_size = hinit->bucket_size - sizeof(void *);
 
-  /**寻找最小的使用空间下标  */
-/**   start = nelts / (bucket_size / (2 * sizeof(void *))); */
-/**   start = start ? start : 1; */
-/**  */
-/**   if (hinit->max_size > 10000 && hinit->max_size / nelts < 100) { */
-/**     start = hinit->max_size  - 1000; */
-/**   } */
-/**  */
-/**   for (size = start; size <= hinit->max_size && size <= nelts; size ++) { */
-/**     memset(test, 0, size * sizeof(unsigned short)); */
-/**  */
-/**     for (n = 0; n < nelts; n++) { */
-/**       if (name[n].key == NULL) {  */
-/**         continue; */
-/**       } */
-/**  */
-/**       key = name[n].key_hash % size; */
-/**       test[key] = (unsigned short)(test[key] + elt_size); */
-/**  */
-/**       if (test[key] > (unsigned short)bucket_size) { */
-/**         goto next; */
-/**       } */
-/**     } */
-/**  */
-/**     goto found; */
-/** next: */
-/**     continue; */
-/**   } */
-/**  */
   size = nelts * 2; //装填因子为0.5 超过0.7 冲突增加 效率降低
   size = size < hinit->max_size ? size : hinit->max_size;
 
-/** found: */
   /**为每个bucket预留哨兵位置 */
   for (i = 0; i < size; i++) {
     test[i] = sizeof(void *);
@@ -224,7 +194,6 @@ hash_init(hash_init_t *hinit, hash_key_t *name, int nelts)
 
     elt = (hash_elt_t *) ((u_char *)buckets[key] + test[key]);
     elt->value = name[n].value;
-    /** elt->len = strlen(name[n].key); */
     elt->key_name = name[n].key;
     test[key] = (unsigned short) (test[key] + elt_size);
   } 

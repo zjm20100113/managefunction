@@ -1,6 +1,6 @@
 MACH_CACHE_LINE=`/bin/bash ./conf`
-CC = gcc -g -Wall -O3  -DLINUX
-OBJS = palloc.o log.o string_hash.o test.o
+CC = gcc -g -Wall -O3  -DLINUX -lpthread
+OBJS = share_memory.o atomic_mutex_lock.o palloc.o log.o string_hash.o test.o
 
 all:HASH
 
@@ -12,4 +12,4 @@ HASH:$(OBJS)
 	$(CC) -c $< -DMACH_CACHE_LINE=${MACH_CACHE_LINE}
 
 clean:
-	rm -f *.o HASH tp* *.lis 
+	rm -f *.o HASH tp* *.lis *.gch

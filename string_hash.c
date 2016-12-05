@@ -94,9 +94,13 @@ hash_init(hash_init_t *hinit, hash_key_t *name, int nelts)
   u_char             *elts = NULL;
   size_t              len = 0;
   unsigned short     *test;
-  int                 i = 0, n = 0, key = 0, size = 0, start = 0, bucket_size = 0;
+  int                 i = 0;
+  int                 n = 0;
+  int                 key = 0;
+  int                 size = 0;
   hash_elt_t         *elt = NULL, **buckets = NULL;
   size_t              elt_size = hash_elt_size();
+
 
   if (hinit->max_size <= 0) {
     return -2;
@@ -111,7 +115,6 @@ hash_init(hash_init_t *hinit, hash_key_t *name, int nelts)
     return ERROR;
   }
 
-  bucket_size = hinit->bucket_size - sizeof(void *);
 
   size = nelts * 2; //装填因子为0.5 超过0.7 冲突增加 效率降低
   size = size < hinit->max_size ? size : hinit->max_size;

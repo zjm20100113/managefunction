@@ -3,6 +3,11 @@
 #include "share_memory.h"
 #include "atomic_mutex_lock.h"
 #include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+
+#define  CHLD_EXIT  '0'
+#define  CHLD_ACTIVE '1'
 
 extern int cache_size;
 
@@ -10,6 +15,15 @@ typedef struct {
   char user_id[17];
   char acct_id[17];
 } user_t;
+
+typedef struct {
+  pid_t     pid[128];
+  char      status[128];
+  intptr_t  cur_cnt;
+  intptr_t  exist_cnt;
+} proc_status_t;
+
+typedef intptr_t (*chld_func)(void *param);
 
 user_t test_data[] = {
    {"391117", "103102527"}, {"391118", "103102528"},
@@ -22,6 +36,85 @@ user_t test_data[] = {
    {"391133", "103102542"}, {"391134", "103102543"}
 };
 
+proc_status_t gobal_child_status;
+
+void sig_child_exit(int signo)
+{
+  exit(0);
+}
+
+void sig_father_exit(int signo)
+{
+  kill(0, 15);
+  exit(0);
+}
+
+void sig_chld(int signo) {
+  pid_t     pid;
+  int       i, status;
+
+  while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+    
+    gobal_child_status.exist_cnt++;
+
+    for (i = 0; i < gobal_child_status.cur_cnt; i++) {
+
+      if (gobal_child_status.pid[i] == pid) {
+        gobal_child_status.status[i] = CHLD_ACTIVE; 
+        break;
+      }
+    }
+  }
+}
+
+int
+mutli_process(int idx, chld_func func, void *parm)
+{
+  setpgrp();
+
+  struct sigaction act_chld, act_father, act_child;
+  act_father.sa_handler = sig_father_exit;
+  sigemptyset(&act_father.sa_mask);
+  act_father.sa_flags = 0;
+
+  sigaction(SIGQUIT, &act_father, 0);
+  sigaction(SIGINT, &act_father, 0);
+  sigaction(SIGTERM, &act_father, 0);
+
+  act_chld.sa_handler = sig_chld;
+  sigemptyset(&act_chld.sa_mask);
+  act_chld.sa_flags = 0;
+
+  sigaction(SIGCHLD, &act_chld, 0);
+
+  pid_t pid = -1;
+
+  pid = fork();
+
+  if (pid > 0) {
+
+    gobal_child_status.pid[gobal_child_status.cur_cnt] = pid;
+    gobal_child_status.status[gobal_child_status.cur_cnt] = CHLD_ACTIVE;
+    gobal_child_status.cur_cnt++;
+    return 0;
+  } else if (0 == pid) {
+
+    act_child.sa_handler = sig_child_exit;
+    sigemptyset(&act_child.sa_mask);
+    act_child.sa_flags = 0;
+
+    sigaction(SIGQUIT, &act_child, 0);
+    sigaction(SIGINT, &act_child, 0);
+    sigaction(SIGTERM, &act_child, 0);
+
+    func(parm);
+
+    exit(0);
+  } else {
+    return -1;
+  }
+}
+
 int main(int argc, char **argv) 
 {
   pool_t             *pool = NULL;
@@ -29,6 +122,7 @@ int main(int argc, char **argv)
   int                 r;
   hash_init_t         hinit;
   size_t              record_cnt = 0;
+
 
   pool = create_pool(1024 * 5);
   if (NULL == pool) {
@@ -84,7 +178,6 @@ int main(int argc, char **argv)
     hash_user[i].key = test_data[i].user_id;
     hash_user[i].key_hash = hinit.key(test_data[i].user_id, 16);
     hash_user[i].value = (void *)( &test_data[i]);
-
   }
 
 
@@ -97,25 +190,6 @@ int main(int argc, char **argv)
   log_msg(log, 0, "hash initdone");
  
   int j = 0; 
-
-  // char enter_string[18] = {0};
-  //
-  // while (strcmp(enter_string, "quit")) {
-  //   scanf("%s", enter_string);
-  //
-  //   if (strlen(enter_string) < 2) {
-  //     continue;
-  //   }
-  //
-  //   puser = (user_t *) hash_find(&hinit, enter_string);
-  //   if (NULL == puser) {
-  //     log_msg(log, -2, "userid=%s data is losed", enter_string);
-  //   } else {
-  //     log_msg(log, 0, "userid= %s, custid=%s, acct_id=%s, name=%s, status=%s, areaid=%s, countyid=%s",
-  //             puser->user_id, puser->cust_id, puser->acct_id, puser->user_name, puser->user_status,
-  //             puser->area_id, puser->county_id);
-  //   }
-  // }
 
   for (j = 0; j < i; j++) {
     puser = (user_t *) hash_find(&hinit, test_data[j].user_id);
@@ -133,6 +207,21 @@ int main(int argc, char **argv)
   
   destroy_pool(pool);
 
+
+
+  gobal_child_status.cur_cnt = 0;
+  gobal_child_status.exist_cnt = 0;
+  memset(gobal_child_status.pid, 0, sizeof(gobal_child_status.pid));
+  memset(gobal_child_status.status, 0, sizeof(gobal_child_status.status));
+
+  shmm_t shm;
+  mutex_t mtx;
+
+  shm.size = 256;
+
+  create_share_memory(&shm);
+  
+  /** mutex_create(&mtx, (atomic_t *)shm.addr, (atomic_t *)); */
 
   return 0;
 }

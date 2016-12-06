@@ -18,7 +18,6 @@
 typedef struct {
   u_char      *addr;
   size_t       size;
-  uintptr_t    exists; 
 } shmm_t;
 
 intptr_t

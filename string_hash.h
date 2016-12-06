@@ -23,7 +23,6 @@
 
 typedef struct {
   void             *value;
-  // unsigned short    len;
   char             *key_name;
 }hash_elt_t;
 
@@ -44,8 +43,8 @@ typedef size_t (*hash_key_pt)(char *data, size_t len);
 typedef struct {
  hash_t       *hash;
  hash_key_pt   key;
- int           max_size; // 将要添加成员的最大个数
- int           bucket_size; // 每个存储成员的hash桶的大小, 至少是一个成员的大小
+ int           max_size; 
+ int           bucket_size; 
  char         *name;
  pool_t       *pool;
 }hash_init_t;

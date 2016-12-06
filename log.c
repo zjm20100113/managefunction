@@ -95,7 +95,7 @@ log_error_core(log_t *log, int err,
 
   *p++ = '\n';
 
-  write(log->file.fd, errstr, p - errstr);
+  write(log->file.fd, errstr, (size_t)(p - errstr));
 }
 
 u_char *

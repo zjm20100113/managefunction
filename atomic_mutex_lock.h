@@ -26,7 +26,8 @@ typedef struct {
   uintptr_t   spin;
 } mutex_t;
 
-unsigned long atomic_cmp_set(atomic_t *lock, uintptr_t value, uintptr_t set);
+unsigned long 
+atomic_cmp_set(atomic_t *lock, uintptr_t value, uintptr_t set);
 
 intptr_t 
 mutex_create(mutex_t *mtx, atomic_t *lock, atomic_t *wait);

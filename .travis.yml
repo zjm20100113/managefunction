@@ -3,4 +3,4 @@ compiler:
     - clang
     - gcc
 script: 
-    - make 
+    - make clean && make all

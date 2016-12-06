@@ -1,5 +1,7 @@
 #include "string_hash.h"
 #include "log.h"
+#include "share_memory.h"
+#include "atomic_mutex_lock.h"
 #include <unistd.h>
 
 extern int cache_size;

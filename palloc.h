@@ -11,13 +11,11 @@
 #include <stdint.h>
 #include <errno.h>
 #include <stdarg.h>
+#include "common.h"
 
 #define DEFAULT_POOL_SIZE   (16 * 1024)
 #define POOL_ALIGNMENT       16
 #define PTR_ALIGNMENT        sizeof(unsigned long)    /* platform word */
-#define align(d, a)          (((d) + (a - 1)) & ~(a - 1))
-#define align_ptr(p, a)      \
-  (u_char *) (((uintptr_t) (p) + ((uintptr_t) a - 1)) & ~((uintptr_t) a - 1))
 
 #define MIN_POOL_SIZE        \
   align((sizeof(pool_t) + 2 * sizeof(pool_large_t)), POOL_ALIGNMENT)

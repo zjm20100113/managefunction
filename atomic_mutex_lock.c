@@ -11,6 +11,7 @@ unsigned long atomic_cmp_set(atomic_t *lock, uintptr_t value, uintptr_t set)
 intptr_t
 mutex_create(mutex_t *mtx, atomic_t *lock, atomic_t *wait)
 {
+  mtx->semaphore = 0;
   mtx->lock = lock;
 
   if ((uintptr_t) - 1 == mtx->spin) {
@@ -43,7 +44,11 @@ mutex_destroy(mutex_t *mtx)
 intptr_t
 mutex_trylock(mutex_t *mtx, pid_t pid)
 {
-  return (0 == *mtx->lock && atomic_cmp_set(mtx->lock, 0, pid));
+  if (0 == *mtx->lock && atomic_cmp_set(mtx->lock, 0, pid)) {
+    return OK;
+  }
+
+  return ERROR;
 }
 
 

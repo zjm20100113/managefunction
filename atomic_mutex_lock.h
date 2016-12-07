@@ -7,14 +7,7 @@
 #include <stdlib.h>
 #include <semaphore.h>
 #include <errno.h>
-
-#ifndef  OK
-#define  OK  0
-#endif
-
-#ifndef  ERROR
-#define  ERROR  -1
-#endif
+#include "common.h"
 
 typedef volatile unsigned long atomic_t;
 

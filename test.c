@@ -130,7 +130,8 @@ intptr_t gobal_number_add(void *num)
 
   while (*number < 20) {
 
-    if (mutex_trylock(&mtx, pid)) {
+    /** if (mutex_trylock(&mtx, pid) == OK) { */
+    if (mutex_lock(&mtx, pid) == OK) {
     
       oldval = *number;
       *number = *number + 1;
@@ -138,7 +139,6 @@ intptr_t gobal_number_add(void *num)
       log_msg(flog, 0, "pid[%P] oldvalue=%ul, newvalue=%ul \n", pid, oldval, *number);
 
       mutex_unlock(&mtx, pid);
-      sleep(1);
     }
   }
   return 0;
@@ -240,8 +240,8 @@ int main(int argc, char **argv)
   memset(gobal_child_status.status, 0, sizeof(gobal_child_status.status));
 
   shm.size = 256;
-  mtx.spin = (uintptr_t) -1;
-  mtx.semaphore = 0;
+  /** mtx.spin = (uintptr_t) -1; */
+  mtx.spin = 0;
 
   create_share_memory(&shm);
 
@@ -249,6 +249,9 @@ int main(int argc, char **argv)
   addr = (atomic_t *)shm.addr;
   wait = (atomic_t *)(shm.addr + 128);
   num = (atomic_t *)(shm.addr + 128 + 64);
+
+  *wait = 0;
+  *addr = 0;
 
   mutex_create(&mtx, addr, wait); 
 

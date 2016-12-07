@@ -5,15 +5,8 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include "common.h"
 
-
-#ifndef ERROR
-#define ERROR    -1
-#endif
-
-#ifndef OK
-#define OK       0
-#endif
 
 typedef struct {
   u_char      *addr;

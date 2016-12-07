@@ -6,16 +6,10 @@
 #include <string.h>
 #include <ctype.h>
 #include "palloc.h"
+#include "common.h"
 
 #define hash(key, c)   ((int) key * 31 + c) 
 
-#ifndef ERROR
-#define ERROR -1
-#endif
-
-#ifndef OK
-#define OK     1
-#endif
 
 #ifndef MACH_CACHE_LINE
 #define MACH_CACHE_LINE  32

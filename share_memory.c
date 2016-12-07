@@ -15,6 +15,7 @@ create_share_memory(shmm_t *shmm)
     return ERROR;
   }
 
+  memset(shmm->addr, 0, shmm->size * sizeof(char));
   return OK;
 }
 

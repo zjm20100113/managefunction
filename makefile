@@ -1,7 +1,7 @@
 MACH_CACHE_LINE=`/bin/bash ./conf`
 CC = cc 
 CFLAG= -g -Wall -O3  -DLINUX -lpthread
-OBJS = share_memory.o atomic_mutex_lock.o palloc.o log.o string_hash.o test.o
+OBJS = multi_process.o share_memory.o atomic_mutex_lock.o palloc.o log.o string_hash.o test.o
 
 all:TEST
 

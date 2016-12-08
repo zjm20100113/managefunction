@@ -12,11 +12,11 @@
 typedef volatile unsigned long atomic_t;
 
 typedef struct {
-  atomic_t   *lock;
-  atomic_t   *wait;
+  atomic_t   *lock; /* should be located in the shared memory */
+  atomic_t   *wait; /* should be located in the shared memory */
   uintptr_t   semaphore;
-  sem_t       sem;         
-  uintptr_t   spin;
+  sem_t      *sem;          // semaphore shared between process, so it is must be located the shared memory
+  uintptr_t   spin; // if spin equal (uintptr_t) -1 then the semaphore will not be used
 } mutex_t;
 
 unsigned long 

@@ -45,13 +45,13 @@ proc_status_t gobal_child_status;
 
 void sig_child_exit(int signo)
 {
-  log_msg(flog, 0, "child recv the signo %d\n", signo);
+  log_msg(flog, 0, "child recv the signo %d", signo);
   exit(0);
 }
 
 void sig_father_exit(int signo)
 {
-  log_msg(flog, 0, "father recv the signo %d\n", signo);
+  log_msg(flog, 0, "father recv the signo %d", signo);
   kill(0, 15);
   exit(0);
 }
@@ -127,18 +127,29 @@ intptr_t gobal_number_add(void *num)
   pid_t pid = getpid();
   atomic_t *number = (atomic_t *) num;
   unsigned long oldval = 0;
+  int  deal_cnt = 0;
+  int  sleep_time = 500;
 
   while (*number < 20) {
 
     /** if (mutex_trylock(&mtx, pid) == OK) { */
     if (mutex_lock(&mtx, pid) == OK) {
-    
-      oldval = *number;
-      *number = *number + 1;
 
-      log_msg(flog, 0, "pid[%P] oldvalue=%ul, newvalue=%ul \n", pid, oldval, *number);
+      if (*number < 20) {
+        oldval = *number;
+        *number = *number + 1;
 
+        log_msg(flog, 0, "oldvalue=%ul, newvalue=%ul ", oldval, *number);
+
+        ++deal_cnt;
+      }
+      
       mutex_unlock(&mtx, pid);
+
+      if (deal_cnt > 5) {
+        usleep(sleep_time);
+        sleep_time <<= 2;
+      }
     }
   }
   return 0;
@@ -149,13 +160,15 @@ int main(int argc, char **argv)
   pool_t             *pool = NULL;
   int                 r;
   hash_init_t         hinit;
+  atomic_t *addr, *wait, *num;
+  sem_t    *sm;
   size_t              record_cnt = 0;
 
   flog = &file_log;
 
   pool = create_pool(1024 * 5);
   if (NULL == pool) {
-    printf("create pool failed \n");
+    printf("create pool failed ");
     exit(-2);
   }
 
@@ -240,18 +253,23 @@ int main(int argc, char **argv)
   memset(gobal_child_status.status, 0, sizeof(gobal_child_status.status));
 
   shm.size = 256;
+
   /** mtx.spin = (uintptr_t) -1; */
   mtx.spin = 0;
 
   create_share_memory(&shm);
 
-  atomic_t *addr, *wait, *num;
+  
+  
   addr = (atomic_t *)shm.addr;
-  wait = (atomic_t *)(shm.addr + 128);
-  num = (atomic_t *)(shm.addr + 128 + 64);
+  wait = (atomic_t *)(shm.addr + 64);
+  sm = (sem_t *)(shm.addr + 2 * 64);
+  num = (atomic_t *)(shm.addr + 3 * 64);
 
   *wait = 0;
   *addr = 0;
+  *num = 0;
+  mtx.sem = sm;
 
   mutex_create(&mtx, addr, wait); 
 
@@ -268,8 +286,12 @@ int main(int argc, char **argv)
   i = 0;
 
   for (; i < gobal_child_status.cur_cnt; i++) {
-    log_msg(flog, 0, "idx:%d pid:%P status:%c \n", i, gobal_child_status.pid[i],
+    log_msg(flog, 0, "idx:%d pid:%P status:%c ", i, gobal_child_status.pid[i],
                                                    gobal_child_status.status[i]);
+  }
+
+  if (mtx.semaphore) {
+    mutex_destroy(&mtx);
   }
 
   free_share_memory(&shm);

@@ -1,4 +1,6 @@
 #include "atomic_mutex_lock.h"
+#include "log.h"
+extern log_t *flog;
 
 static void 
 mutex_wakeup(mutex_t *mtx);
@@ -22,7 +24,7 @@ mutex_create(mutex_t *mtx, atomic_t *lock, atomic_t *wait)
   
   mtx->wait = wait;
 
-  if (sem_init(&mtx->sem, 1, 0)) { /** the semaphore is to be shared between process */
+  if (sem_init(mtx->sem, 1, 0)) { /** the semaphore is to be shared between process */
     return ERROR;
   }
 
@@ -34,7 +36,7 @@ mutex_create(mutex_t *mtx, atomic_t *lock, atomic_t *wait)
 intptr_t 
 mutex_destroy(mutex_t *mtx)
 {
-  if (sem_destroy(&mtx->sem)) {
+  if (sem_destroy(mtx->sem)) {
     return ERROR;
   }
 
@@ -83,6 +85,7 @@ mutex_lock(mutex_t *mtx, pid_t pid)
     }
      
     if (mtx->semaphore) {
+      log_msg(flog, 0, "before add wait value:%ul", *mtx->wait);
       __sync_fetch_and_add(mtx->wait, 1);
 
       if (0 == *mtx->lock && atomic_cmp_set(mtx->lock, 0, pid)) {
@@ -90,13 +93,16 @@ mutex_lock(mutex_t *mtx, pid_t pid)
         return OK;
       }
  
-      while (sem_wait(&mtx->sem) == -1) {
-        
+      log_msg(flog, 0, "sem waiting, wait:%ul", *mtx->wait);
+      while (sem_wait(mtx->sem) == -1) {
+
+        log_msg(flog, 0, "sem wait return -1");
         if (errno != EINTR) {
           break;
         }
       }
-      
+
+      log_msg(flog, 0, "semaphore wake up");
       continue;
     }
 
@@ -139,6 +145,7 @@ mutex_wakeup(mutex_t *mtx)
     }
   }
 
-  sem_post(&mtx->sem);
+  sem_post(mtx->sem);
 
+  log_msg(flog, 0, "semaphore post done");
 }

@@ -1,5 +1,8 @@
 #! /bin/bash
 
+rm -f config.mk
+touch config.mk
+
 MACHINE=$(uname -m 2>/dev/null)
 
 case $MACHINE in
@@ -14,5 +17,5 @@ case $MACHINE in
   ;;
 esac
 
-echo $CACHE_LINE
+echo "CACHE_LINE=$CACHE_LINE" >> config.mk
 
